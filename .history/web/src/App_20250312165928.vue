@@ -1,0 +1,119 @@
+<!--
+ * @Author: john_mactavish 981192661@qq.com
+ * @Date: 2025-03-12 09:20:58
+ * @LastEditors: john_mactavish 981192661@qq.com
+ * @LastEditTime: 2025-03-12 16:59:28
+ * @FilePath: \passengerInfoSearch\web\src\App.vue
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
+<script setup>
+import Header from './components/Header.vue'
+import axios from 'axios'
+import { dayjs } from 'element-plus'
+import { ref } from 'vue'
+
+const passengerData = ref([]);
+const verifyData = ref([]);
+
+const reset = () => {
+  passengerData.value = [];
+  verifyData.value = [];
+  console.log(passengerData.value, verifyData.value);
+}
+
+const queryPassenger = async (params) => {
+  try {
+    await axios.get("/api/queryPassenger", { params }).then(res => {
+      const data = res.data.data;
+      passengerData.value = data.map((item, index) => {
+        item.CHECKIN_TIME = dayjs(item.CHECKIN_TIME).format('YYYY-MM-DD HH:mm:ss');
+        return item
+      });
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+const queryVerify = async (row) => {
+  const time = dayjs(dayjs()).diff(row.FLIGHT_DATE, 'day');
+  const params = {
+    PASSENGER_ID: row.ID,
+    time
+  }
+  console.log(params);
+  try {
+    await axios.get("/api/queryVerify", { params }).then(res => {
+      const data = res.data.data;
+      console.log(data);
+      verifyData.value = data.map(item => {
+        item.VERIFY_TIME = dayjs(item.VERIFY_TIME).format('YYYY-MM-DD HH:mm:ss');
+        item.BOARD_TIME = dayjs(item.BOARD_TIME).format('YYYY-MM-DD HH:mm:ss');
+        return item
+      });
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+</script>
+
+<template>
+  <div class="common-layout">
+    <el-container>
+      <el-header>
+        <Header @emitSearch="queryPassenger" @emitReset="reset" />
+      </el-header>
+      <el-main>
+        <el-table :data="passengerData" style="width: 100%">
+          <el-table-column label="NAME" width="80px">
+            <template #default="scope">
+              <el-button link type="primary" size="small" @click.prevent="queryVerify(scope.row)">
+                {{ scope.row.NAME }}
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column prop="FLIGHT_NO" label="FLIGHT_NO" width="110px" />
+          <el-table-column prop="ID_CARD" label="ID_CARD" />
+          <el-table-column prop="TERMINALL" label="TERMINALL" width="110px" />
+          <el-table-column prop="CHECKIN_TIME" label="CHECKIN_TIME" width="220px" />
+          <el-table-column prop="CHECKIN_WAY" label="CHECKIN_WAY" />
+          <el-table-column prop="BAGGAGE_NUM" label="BAGGAGE_NUM" />
+          <el-table-column prop="CHECKIN_AGENT" label="CHECKIN_AGENT" />
+          <el-table-column prop="CHECKIN_OFFCIE" label="CHECKIN_OFFCIE" />
+        </el-table>
+        <hr>
+        <el-table :data="verifyData" style="width: 100%">
+          <el-table-column prop="CARD_NAME" label="NAME" />
+          <el-table-column prop="FLIGHT_NO" label="FLIGHT_NO" />
+          <el-table-column prop="CHANNEL" label="CHANNEL" />
+          <el-table-column prop="VERIFY_TIME" label="VERIFY_TIME" />
+          <el-table-column prop="GATE" label="GATE" />
+          <el-table-column prop="BOARD_TIME" label="BOARD_TIME" />
+          <el-table-column label="PASS_PHOTO">
+            <template #default="scope">
+              <img :src="`http://10.33.113.23:8002${scope.row.PASS_PHOTO}`" alt="">
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-main>
+    </el-container>
+  </div>
+</template>
+
+<style scoped>
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.vue:hover {
+  filter: drop-shadow(0 0 2em #42b883aa);
+}
+</style>
