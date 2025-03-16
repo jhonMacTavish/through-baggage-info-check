@@ -2,27 +2,27 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-15 22:03:39
+ * @LastEditTime: 2025-03-15 21:49:02
  * @FilePath: \passengerInfoSearch\web\src\components\Header.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
   <el-form ref="ruleFormRef" :rules="rules" :inline="true" :model="ruleForm" class="demo-form-inline">
     <el-form-item>
-      <el-checkbox-group v-model="checkedItems" :min="1" @change="handleChange(ruleFormRef)">
+      <el-checkbox-group v-model="checkedItems" :min="1" @change="resetForm(ruleFormRef)">
         <el-checkbox v-for="item in items" :key="item" :label="item" :value="item">
           {{ item }}
         </el-checkbox>
       </el-checkbox-group>
     </el-form-item>
-    <el-form-item label="姓名" prop="NAME" v-if="checkedItems.includes('姓名')">
-      <el-input v-model="ruleForm.NAME" :formatter="(value) => value.toUpperCase()" placeholder="输入姓名" clearable />
+    <el-form-item label="姓名" prop="name" v-if="checkedItems.includes('姓名')">
+      <el-input v-model="ruleForm.name" :formatter="(value) => value.toUpperCase()" placeholder="输入姓名" clearable />
     </el-form-item>
-    <el-form-item label="航班号" prop="FLIGHT_NO" v-if="checkedItems.includes('航班号')">
-      <el-input v-model="ruleForm.FLIGHT_NO" :formatter="(value) => value.toUpperCase()" placeholder="输入航班号" clearable />
+    <el-form-item label="航班号" prop="flight" v-if="checkedItems.includes('航班号')">
+      <el-input v-model="ruleForm.flight" :formatter="(value) => value.toUpperCase()" placeholder="输入航班号" clearable />
     </el-form-item>
-    <el-form-item label="身份证号" prop="ID_CARD" v-if="checkedItems.includes('身份证号')">
-      <el-input v-model="ruleForm.ID_CARD" :formatter="(value) => value.toUpperCase()" placeholder="输入身份证号" clearable />
+    <el-form-item label="身份证号" prop="IDcard" v-if="checkedItems.includes('身份证号')">
+      <el-input v-model="ruleForm.IDcard" :formatter="(value) => value.toUpperCase()" placeholder="输入身份证号" clearable />
     </el-form-item>
     <el-form-item label="时间范围">
       <el-select v-model="ruleForm.time" placeholder="选择时间">
@@ -33,7 +33,7 @@
     <el-form-item>
       <el-button type="primary" @click="onSubmit(ruleFormRef)" :disabled="btnDisabled">Query {{ btnDisabled ? `( ${time}
         )` : null
-      }}</el-button>
+        }}</el-button>
       <el-button @click="initForm">Reset</el-button>
     </el-form-item>
   </el-form>
@@ -50,9 +50,9 @@ const checkedItems = ref(['姓名'])
 const items = ['姓名', '航班号', '身份证号']
 
 const ruleForm = reactive({
-  NAME: '',
-  FLIGHT_NO: '',
-  ID_CARD: '',
+  name: '',
+  flight: '',
+  IDcard: '',
   time: 7
 })
 const validators = [
@@ -86,9 +86,9 @@ const validators = [
 ];
 const ruleFormRef = ref<FormInstance>()
 const rules = reactive<FormRules<typeof ruleForm>>({
-  NAME: [{ required: checkedItems.value.includes('姓名'), validator: validators[0], trigger: 'blur' }],
-  FLIGHT_NO: [{ required: checkedItems.value.includes('航班号'), validator: validators[1], trigger: 'blur' }],
-  ID_CARD: [{ required: checkedItems.value.includes('身份证号'), validator: validators[2], trigger: 'blur' }],
+  name: [{ required: checkedItems.value.includes('姓名'), validator: validators[0], trigger: 'blur' }],
+  flight: [{ required: checkedItems.value.includes('航班号'), validator: validators[1], trigger: 'blur' }],
+  IDcard: [{ required: checkedItems.value.includes('身份证号'), validator: validators[2], trigger: 'blur' }],
 });
 
 let timer = null;
@@ -98,8 +98,8 @@ const btnDisabled = ref(false);
 const initForm = () => {
   Object.keys(ruleForm).forEach(key => {
     if (ruleForm[key] && key != 'time') {
+      // console.log(key, params[key]);
       ruleForm[key] = '';
-      emit('emitReset', '');
     }
   });
 }
@@ -126,11 +126,10 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
   })
 }
 
-const handleChange = (formEl: FormInstance | undefined) => {
+const resetForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  if (!checkedItems.value.includes('姓名')) ruleForm.NAME = '';
-  if (!checkedItems.value.includes('航班号')) ruleForm.FLIGHT_NO = '';
-  if (!checkedItems.value.includes('身份证号')) ruleForm.ID_CARD = '';
+  // formEl.resetFields();
+  emit('emitReset', '');
 }
 </script>
 

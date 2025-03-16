@@ -25,7 +25,7 @@ const queryPassenger = async (params) => {
     console.log(data);
 
     if (data.data.length == 0) {
-      ElMessage.warning(`该旅客没有值机信息`)
+      ElMessage.warning(`该旅客没有过检信息`)
     } else {
       passengerData.value = data.data.map(item => ({
         ...item,

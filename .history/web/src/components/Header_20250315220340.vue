@@ -15,14 +15,14 @@
         </el-checkbox>
       </el-checkbox-group>
     </el-form-item>
-    <el-form-item label="姓名" prop="NAME" v-if="checkedItems.includes('姓名')">
-      <el-input v-model="ruleForm.NAME" :formatter="(value) => value.toUpperCase()" placeholder="输入姓名" clearable />
+    <el-form-item label="姓名" prop="name" v-if="checkedItems.includes('姓名')">
+      <el-input v-model="ruleForm.name" :formatter="(value) => value.toUpperCase()" placeholder="输入姓名" clearable />
     </el-form-item>
-    <el-form-item label="航班号" prop="FLIGHT_NO" v-if="checkedItems.includes('航班号')">
-      <el-input v-model="ruleForm.FLIGHT_NO" :formatter="(value) => value.toUpperCase()" placeholder="输入航班号" clearable />
+    <el-form-item label="航班号" prop="flight" v-if="checkedItems.includes('航班号')">
+      <el-input v-model="ruleForm.flight" :formatter="(value) => value.toUpperCase()" placeholder="输入航班号" clearable />
     </el-form-item>
-    <el-form-item label="身份证号" prop="ID_CARD" v-if="checkedItems.includes('身份证号')">
-      <el-input v-model="ruleForm.ID_CARD" :formatter="(value) => value.toUpperCase()" placeholder="输入身份证号" clearable />
+    <el-form-item label="身份证号" prop="IDcard" v-if="checkedItems.includes('身份证号')">
+      <el-input v-model="ruleForm.IDcard" :formatter="(value) => value.toUpperCase()" placeholder="输入身份证号" clearable />
     </el-form-item>
     <el-form-item label="时间范围">
       <el-select v-model="ruleForm.time" placeholder="选择时间">
@@ -50,9 +50,9 @@ const checkedItems = ref(['姓名'])
 const items = ['姓名', '航班号', '身份证号']
 
 const ruleForm = reactive({
-  NAME: '',
-  FLIGHT_NO: '',
-  ID_CARD: '',
+  name: '',
+  flight: '',
+  IDcard: '',
   time: 7
 })
 const validators = [
@@ -86,9 +86,9 @@ const validators = [
 ];
 const ruleFormRef = ref<FormInstance>()
 const rules = reactive<FormRules<typeof ruleForm>>({
-  NAME: [{ required: checkedItems.value.includes('姓名'), validator: validators[0], trigger: 'blur' }],
-  FLIGHT_NO: [{ required: checkedItems.value.includes('航班号'), validator: validators[1], trigger: 'blur' }],
-  ID_CARD: [{ required: checkedItems.value.includes('身份证号'), validator: validators[2], trigger: 'blur' }],
+  name: [{ required: checkedItems.value.includes('姓名'), validator: validators[0], trigger: 'blur' }],
+  flight: [{ required: checkedItems.value.includes('航班号'), validator: validators[1], trigger: 'blur' }],
+  IDcard: [{ required: checkedItems.value.includes('身份证号'), validator: validators[2], trigger: 'blur' }],
 });
 
 let timer = null;
@@ -128,9 +128,9 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
 
 const handleChange = (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  if (!checkedItems.value.includes('姓名')) ruleForm.NAME = '';
-  if (!checkedItems.value.includes('航班号')) ruleForm.FLIGHT_NO = '';
-  if (!checkedItems.value.includes('身份证号')) ruleForm.ID_CARD = '';
+  if (!checkedItems.value.includes('姓名')) ruleForm.name = '';
+  if (!checkedItems.value.includes('航班号')) ruleForm.flight = '';
+  if (!checkedItems.value.includes('身份证号')) ruleForm.IDcard = '';
 }
 </script>
 

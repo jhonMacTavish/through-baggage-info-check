@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-15 21:43:27
+ * @LastEditTime: 2025-03-15 21:31:26
  * @FilePath: \passengerInfoSearch\web\src\App.vue
 -->
 <script setup>
@@ -22,16 +22,10 @@ const queryPassenger = async (params) => {
   try {
     loading.value = true
     const { data } = await axios.get("/api/queryPassenger", { params })
-    console.log(data);
-
-    if (data.data.length == 0) {
-      ElMessage.warning(`该旅客没有值机信息`)
-    } else {
-      passengerData.value = data.data.map(item => ({
-        ...item,
-        CHECKIN_TIME: dayjs(item.CHECKIN_TIME).format('YYYY-MM-DD HH:mm:ss')
-      }))
-    }
+    passengerData.value = data.data.map(item => ({
+      ...item,
+      CHECKIN_TIME: dayjs(item.CHECKIN_TIME).format('YYYY-MM-DD HH:mm:ss')
+    }))
   } catch (error) {
     ElMessage.error(`查询失败: ${error.message}`)
   } finally {
@@ -48,7 +42,7 @@ const queryVerify = async (row) => {
         time
       }
     })
-
+    console.log(data);
     if (data.data.length == 0) {
       ElMessage.warning(`该旅客没有过检信息`)
     } else {
