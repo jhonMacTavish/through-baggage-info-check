@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-16 08:17:34
+ * @LastEditTime: 2025-03-16 08:08:30
  * @FilePath: \passengerInfoSearch\web\src\components\Header.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -34,7 +34,7 @@
     <el-form-item>
       <el-button type="primary" @click="onSubmit(ruleFormRef)" :disabled="btnDisabled">Query {{ btnDisabled ? `( ${time}
         )` : null
-      }}</el-button>
+        }}</el-button>
       <el-button @click="initForm">Reset</el-button>
     </el-form-item>
   </el-form>
@@ -77,7 +77,7 @@ const validators = [
   },
   (rule: any, value: any, callback: any) => {
     if (value === '') {
-      callback(new Error('请输入身份证号'))
+      callback(new Error('请输入航班号'))
     } else if (!/^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/.test(value)) {
       callback(new Error("输入的身份证号不符合规范"))
     } else {
@@ -97,11 +97,10 @@ const time = ref(5);
 const btnDisabled = ref(false);
 
 const initForm = () => {
-  emit('emitReset', '');
-
   Object.keys(ruleForm).forEach(key => {
     if (ruleForm[key] && key != 'time') {
       ruleForm[key] = '';
+      emit('emitReset', '');
     }
   });
 }
