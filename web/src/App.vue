@@ -2,7 +2,11 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
+<<<<<<< HEAD
  * @LastEditTime: 2025-03-27 15:37:20
+=======
+ * @LastEditTime: 2025-03-27 16:15:50
+>>>>>>> 01a0f82a00088ada01165829f97c5a6ac6399a6a
  * @FilePath: \passengerInfoSearch\web\src\App.vue
 -->
 <script setup>
@@ -15,7 +19,10 @@ import { dayjs } from 'element-plus'
 
 const tableData = ref([])
 const loading = ref(false)
+<<<<<<< HEAD
 const date = dayjs().format('YYYY-MM-DD')
+=======
+>>>>>>> 01a0f82a00088ada01165829f97c5a6ac6399a6a
 
 const getData = async () => {
   try {
@@ -23,7 +30,12 @@ const getData = async () => {
       params: {}
     });
     if (data.data.length == 0) {
+<<<<<<< HEAD
       ElMessage.warning(`没有通程行李信息`)
+=======
+      ElMessage.warning(`该旅客没有值机信息`)
+      reset()
+>>>>>>> 01a0f82a00088ada01165829f97c5a6ac6399a6a
     } else {
       tableData.value = data.data.map(item => ({
         ...item,
@@ -104,10 +116,18 @@ const exportExcel = async () => {
   }
 }
 
+<<<<<<< HEAD
 onMounted(() => {
   getData();
 })
 
+=======
+const reset = () => {
+  console.log('reset');
+  passengerData.value = []
+  verifyData.value = []
+}
+>>>>>>> 01a0f82a00088ada01165829f97c5a6ac6399a6a
 </script>
 
 <template>
