@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-27 15:37:20
+ * @LastEditTime: 2025-03-27 15:41:51
  * @FilePath: \passengerInfoSearch\web\src\App.vue
 -->
 <script setup>
@@ -56,10 +56,10 @@ const getData = async () => {
 const exportExcel = async () => {
   try {
     // 1. 加载 Excel 模板文件
-    const response = await fetch('/template.xlsx');  // 确保模板文件放在 `public` 目录下
+    const response = await fetch('/template.xlsx');  // 确保模板放在 `public` 目录下
     const arrayBuffer = await response.arrayBuffer();
 
-    // 2. 读取 Excel 文件
+    // 2. 读取 Excel 文件（启用 `cellStyles: true` 以保留样式）
     const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
 
     // 3. 获取第一个 Sheet（假设数据在第一个 Sheet）
@@ -69,29 +69,49 @@ const exportExcel = async () => {
     // 4. 读取 Excel 模板的 **合并单元格信息**
     const merges = worksheet['!merges'] || [];
 
-    // 5. 填充数据（假设数据从第 2 行开始填充）
-    tableData.value.forEach((item, index) => {
-      const rowIndex = index + 7;  // 假设 Excel 第一行为标题，从 A2 开始填充
+    // 5. 定义单元格样式（居中 & 添加边框）
+    const cellStyle = {
+      alignment: { horizontal: 'center', vertical: 'center' }, // 居中
+      border: { // 边框
+        top: { style: 'thin' },
+        bottom: { style: 'thin' },
+        left: { style: 'thin' },
+        right: { style: 'thin' },
+      },
+      font: { bold: false, name: 'Arial', sz: 12 }, // 字体
+    };
 
-      worksheet[`A${rowIndex}`] = { v: '', t: 's' }; // 序号
-      worksheet[`B${rowIndex}`] = { v: item.航班号, t: 's' };
-      worksheet[`C${rowIndex}`] = { v: item.属性, t: 's' };
-      worksheet[`D${rowIndex}`] = { v: item.计划起飞时间, t: 's' };
-      worksheet[`E${rowIndex}`] = { v: item.计划到港时间, t: 's' };
-      worksheet[`F${rowIndex}`] = { v: item.始发地, t: 's' };
-      worksheet[`G${rowIndex}`] = { v: item.旅客人数 || '/', t: 'n' };
-      worksheet[`H${rowIndex}`] = { v: item.行李件数 || '/', t: 'n' };
-      worksheet[`I${rowIndex}`] = { v: item.旅客人数web || '/', t: 'n' };
-      worksheet[`J${rowIndex}`] = { v: item.行李件数web || '/', t: 'n' };
+    // 6. 填充数据（假设数据从第 2 行开始填充）
+    tableData.value.forEach((item, index) => {
+      const rowIndex = index + 2;  // 假设 Excel 第一行为标题，从 A2 开始填充
+
+      const dataMap = {
+        A: index + 1,  // 序号
+        B: item.航班号,
+        C: item.属性,
+        D: item.计划起飞时间,
+        E: item.计划到港时间,
+        F: item.始发地,
+        G: item.旅客人数 || '/',
+        H: item.行李件数 || '/',
+        I: item.旅客人数web || '/',
+        J: item.行李件数web || '/'
+      };
+
+      // 逐个单元格填充数据，并应用样式
+      Object.keys(dataMap).forEach(col => {
+        const cellRef = `${col}${rowIndex}`;
+        worksheet[cellRef] = { v: dataMap[col], t: 's', s: cellStyle };
+      });
     });
 
-    // 6. 重新设置合并单元格，保持模板结构
+    // 7. 重新设置合并单元格，保持模板结构
     worksheet['!merges'] = merges;
 
-    // 7. 生成新的 Excel 文件
+    // 8. 生成新的 Excel 文件
     const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
 
-    // 8. 保存文件
+    // 9. 保存文件
     FileSaver.saveAs(
       new Blob([wbout], { type: 'application/octet-stream' }),
       `${date}通程行李检查单.xlsx`

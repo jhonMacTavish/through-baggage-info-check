@@ -73,7 +73,7 @@ const exportExcel = async () => {
     tableData.value.forEach((item, index) => {
       const rowIndex = index + 7;  // 假设 Excel 第一行为标题，从 A2 开始填充
 
-      worksheet[`A${rowIndex}`] = { v: '', t: 's' }; // 序号
+      worksheet[`A${rowIndex}`] = { v: index + 1, t: 'n' }; // 序号
       worksheet[`B${rowIndex}`] = { v: item.航班号, t: 's' };
       worksheet[`C${rowIndex}`] = { v: item.属性, t: 's' };
       worksheet[`D${rowIndex}`] = { v: item.计划起飞时间, t: 's' };

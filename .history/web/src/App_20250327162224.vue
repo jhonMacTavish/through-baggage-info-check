@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-27 15:37:20
+ * @LastEditTime: 2025-03-27 16:22:24
  * @FilePath: \passengerInfoSearch\web\src\App.vue
 -->
 <script setup>
@@ -73,7 +73,7 @@ const exportExcel = async () => {
     tableData.value.forEach((item, index) => {
       const rowIndex = index + 7;  // 假设 Excel 第一行为标题，从 A2 开始填充
 
-      worksheet[`A${rowIndex}`] = { v: '', t: 's' }; // 序号
+      // worksheet[`A${rowIndex}`] = { v: index + 1, t: 'n' }; // 序号
       worksheet[`B${rowIndex}`] = { v: item.航班号, t: 's' };
       worksheet[`C${rowIndex}`] = { v: item.属性, t: 's' };
       worksheet[`D${rowIndex}`] = { v: item.计划起飞时间, t: 's' };

@@ -20,7 +20,7 @@ const queryThroughBaggageInfo = async () => {
                 pi.旅客人数,
                 pi.行李件数
             FROM
-                PDPR.TFU_F_FLIGHT f
+                TFU_F_FLIGHT f
             LEFT JOIN (
                 SELECT
                     PI.FLIGHT_NO,
@@ -28,7 +28,7 @@ const queryThroughBaggageInfo = async () => {
                     COUNT(*) AS 旅客人数,
                     SUM(PI.PIECE) AS 行李件数
                 FROM
-                    PDPR.PASSENGER_INFO PI
+                    PASSENGER_INFO PI
                     LEFT JOIN BAG_LISTAGG_ALL BLA ON BLA.PASSENGER_ID = PI.PASSENGER_ID
                 WHERE
                     PI.TIMESTARTPLAN >= SYSDATE - INTERVAL '1' DAY

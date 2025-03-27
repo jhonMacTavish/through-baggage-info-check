@@ -2,17 +2,17 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-04 10:22:53
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-27 14:09:15
+ * @LastEditTime: 2025-03-27 12:04:31
  * @FilePath: \htmle:\projects_vscode\passenger info search\utils\connector.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 const oracledb = require('oracledb');
 
 const config = {
-    user: "PDPR",
-    password: "qazxsw@123",
-    connectString: "10.33.160.3:1521/CKCIDB",
-    // privilege: oracledb.SYSDBA,
+    user: "sys",
+    password: "TFdbadmin123",
+    connectString: "10.35.21.5:1521/INT_SCIMS_SERVICE",
+    privilege: oracledb.SYSDBA,
     poolMin: 2,
     poolMax: 6,
     poolIncrement: 1

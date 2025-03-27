@@ -2,14 +2,14 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-27 15:37:20
+ * @LastEditTime: 2025-03-27 14:52:58
  * @FilePath: \passengerInfoSearch\web\src\App.vue
 -->
 <script setup>
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import FileSaver from 'file-saver'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx'
 import axios from 'axios'
 import { dayjs } from 'element-plus'
 
@@ -22,6 +22,7 @@ const getData = async () => {
     const { data } = await axios.get("/api/queryThroughBaggageInfo", {
       params: {}
     });
+
     if (data.data.length == 0) {
       ElMessage.warning(`没有通程行李信息`)
     } else {
@@ -29,79 +30,41 @@ const getData = async () => {
         ...item,
         计划起飞时间: dayjs(item.计划起飞时间).format('YYYY-MM-DD HH:mm:ss'),
         计划到港时间: dayjs(item.计划到港时间).format('YYYY-MM-DD HH:mm:ss')
-      }));
-
-      await axios.get("/api/statistics/flightInfo").then(res => {
-        const checkData = res.data.obj;
-        if (checkData.length != 0) {
-          tableData.value.forEach(item => {
-            checkData.forEach(checkItem => {
-              if (item.航班号 == checkItem.inFlightNo && item.计划起飞时间 == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
-                item.旅客人数web = checkItem.passengerTotal ? checkItem.passengerTotal : '/';
-                item.行李件数web = checkItem.piece ? checkItem.piece : '/';
-              }
-            })
-          })
-        }
-      })
+      }))
     }
-
-
   } catch (error) {
     console.log(error);
     ElMessage.error(`通程行李信息获取失败: ${error.message}`)
   }
 }
 
-const exportExcel = async () => {
+const exportExcel = () => {
+  // 1.生成Excel工作簿对象
+  var wb = XLSX.utils.table_to_book(document.querySelector('#educe-table'));
+  // 2.手机号，身份证号等会默认使用科学计数法表示，则需要这样设置
+  var wb = XLSX.utils.table_to_book(
+    document.querySelector("#educe-table"),
+    { raw: true }
+  );
+  // 获取二进制字符串作为输出
+  var wbout = XLSX.write(wb, {
+    bookType: 'xlsx',
+    book: true,
+    type: 'array',
+  })
   try {
-    // 1. 加载 Excel 模板文件
-    const response = await fetch('/template.xlsx');  // 确保模板文件放在 `public` 目录下
-    const arrayBuffer = await response.arrayBuffer();
-
-    // 2. 读取 Excel 文件
-    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
-
-    // 3. 获取第一个 Sheet（假设数据在第一个 Sheet）
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-
-    // 4. 读取 Excel 模板的 **合并单元格信息**
-    const merges = worksheet['!merges'] || [];
-
-    // 5. 填充数据（假设数据从第 2 行开始填充）
-    tableData.value.forEach((item, index) => {
-      const rowIndex = index + 7;  // 假设 Excel 第一行为标题，从 A2 开始填充
-
-      worksheet[`A${rowIndex}`] = { v: '', t: 's' }; // 序号
-      worksheet[`B${rowIndex}`] = { v: item.航班号, t: 's' };
-      worksheet[`C${rowIndex}`] = { v: item.属性, t: 's' };
-      worksheet[`D${rowIndex}`] = { v: item.计划起飞时间, t: 's' };
-      worksheet[`E${rowIndex}`] = { v: item.计划到港时间, t: 's' };
-      worksheet[`F${rowIndex}`] = { v: item.始发地, t: 's' };
-      worksheet[`G${rowIndex}`] = { v: item.旅客人数 || '/', t: 'n' };
-      worksheet[`H${rowIndex}`] = { v: item.行李件数 || '/', t: 'n' };
-      worksheet[`I${rowIndex}`] = { v: item.旅客人数web || '/', t: 'n' };
-      worksheet[`J${rowIndex}`] = { v: item.行李件数web || '/', t: 'n' };
-    });
-
-    // 6. 重新设置合并单元格，保持模板结构
-    worksheet['!merges'] = merges;
-
-    // 7. 生成新的 Excel 文件
-    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-    // 8. 保存文件
     FileSaver.saveAs(
-      new Blob([wbout], { type: 'application/octet-stream' }),
+      // Blob: 对象表示一个不可变 原始数据的类文件对象,不一定是JS原生格式的数据。
+      // File: 基于Blob，继承了blob的功能并将其扩展使其支持用户系统上的文件。  
+      new Blob([wbout], { type: 'appliction/octet-stream' }),
+      // 设置导出的文件名称可随意
       `${date}通程行李检查单.xlsx`
-    );
-
-    ElMessage.success("导出成功！");
-  } catch (error) {
-    console.error("导出失败:", error);
-    ElMessage.error("导出失败，请检查模板文件！");
+    )
+  } catch (e) {
+    if (typeof console != 'undefined') console.log(e, wbout);
   }
+  // 返回一个新创建的Blob对象，其内容由参数中给定的数组串联组成。
+  return wbout
 }
 
 onMounted(() => {
@@ -135,8 +98,6 @@ onMounted(() => {
               <el-table-column prop="始发地" label="始发地" />
               <el-table-column prop="旅客人数" label="旅客人数" />
               <el-table-column prop="行李件数" label="行李件数" />
-              <el-table-column prop="旅客人数web" label="旅客人数web" />
-              <el-table-column prop="行李件数web" label="行李件数web" />
             </el-table>
           </el-skeleton>
         </el-card>

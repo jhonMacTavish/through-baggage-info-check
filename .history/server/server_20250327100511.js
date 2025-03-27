@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-04 09:35:08
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-27 15:48:33
+ * @LastEditTime: 2025-03-27 10:05:11
  * @FilePath: \htmle:\projects_vscode\passenger info search\server.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -61,7 +61,7 @@ async function startServer() {
     try {
         await connector.initPool();  // 先初始化连接池
 
-        const PORT = process.env.PORT || 3001;
+        const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => {
             console.log(`服务器启动 监听 ${PORT} 端口号`);
         });

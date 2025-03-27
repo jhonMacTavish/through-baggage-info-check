@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-27 15:37:20
+ * @LastEditTime: 2025-03-27 15:30:51
  * @FilePath: \passengerInfoSearch\web\src\App.vue
 -->
 <script setup>
@@ -33,12 +33,12 @@ const getData = async () => {
 
       await axios.get("/api/statistics/flightInfo").then(res => {
         const checkData = res.data.obj;
-        if (checkData.length != 0) {
+        if(checkData.length != 0){
           tableData.value.forEach(item => {
             checkData.forEach(checkItem => {
-              if (item.航班号 == checkItem.inFlightNo && item.计划起飞时间 == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
-                item.旅客人数web = checkItem.passengerTotal ? checkItem.passengerTotal : '/';
-                item.行李件数web = checkItem.piece ? checkItem.piece : '/';
+              if(item.航班号 == checkItem.inFlightNo && item.计划起飞时间 == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')){
+                item.旅客人数web = checkItem.passengerTotal?checkItem.passengerTotal:'/';
+                item.行李件数web = checkItem.piece?checkItem.piece:'/';
               }
             })
           })
@@ -56,42 +56,37 @@ const getData = async () => {
 const exportExcel = async () => {
   try {
     // 1. 加载 Excel 模板文件
-    const response = await fetch('/template.xlsx');  // 确保模板文件放在 `public` 目录下
+    const response = await fetch('/template.xlsx'); // 确保模板放在 `public` 目录下
     const arrayBuffer = await response.arrayBuffer();
 
     // 2. 读取 Excel 文件
-    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
-    // 3. 获取第一个 Sheet（假设数据在第一个 Sheet）
+    // 3. 获取工作表（假设第一个工作表）
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
-    // 4. 读取 Excel 模板的 **合并单元格信息**
-    const merges = worksheet['!merges'] || [];
+    // 4. 填充数据（假设 `tableData` 结构与 Excel 模板相匹配）
+    const data = tableData.value.map((item, index) => [
+      index + 1,  // 序号
+      item.航班号,
+      item.属性,
+      item.计划起飞时间,
+      item.计划到港时间,
+      item.始发地,
+      item.旅客人数 || '/',
+      item.行李件数 || '/',
+      item.旅客人数web || '/',
+      item.行李件数web || '/'
+    ]);
 
-    // 5. 填充数据（假设数据从第 2 行开始填充）
-    tableData.value.forEach((item, index) => {
-      const rowIndex = index + 7;  // 假设 Excel 第一行为标题，从 A2 开始填充
+    // 5. 将数据写入 Excel 模板（从第 2 行开始填充）
+    XLSX.utils.sheet_add_aoa(worksheet, data, { origin: 'B7' });
 
-      worksheet[`A${rowIndex}`] = { v: '', t: 's' }; // 序号
-      worksheet[`B${rowIndex}`] = { v: item.航班号, t: 's' };
-      worksheet[`C${rowIndex}`] = { v: item.属性, t: 's' };
-      worksheet[`D${rowIndex}`] = { v: item.计划起飞时间, t: 's' };
-      worksheet[`E${rowIndex}`] = { v: item.计划到港时间, t: 's' };
-      worksheet[`F${rowIndex}`] = { v: item.始发地, t: 's' };
-      worksheet[`G${rowIndex}`] = { v: item.旅客人数 || '/', t: 'n' };
-      worksheet[`H${rowIndex}`] = { v: item.行李件数 || '/', t: 'n' };
-      worksheet[`I${rowIndex}`] = { v: item.旅客人数web || '/', t: 'n' };
-      worksheet[`J${rowIndex}`] = { v: item.行李件数web || '/', t: 'n' };
-    });
-
-    // 6. 重新设置合并单元格，保持模板结构
-    worksheet['!merges'] = merges;
-
-    // 7. 生成新的 Excel 文件
+    // 6. 生成新的 Excel 文件
     const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
 
-    // 8. 保存文件
+    // 7. 保存文件
     FileSaver.saveAs(
       new Blob([wbout], { type: 'application/octet-stream' }),
       `${date}通程行李检查单.xlsx`

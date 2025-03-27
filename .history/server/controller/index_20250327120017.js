@@ -1,6 +1,6 @@
 var connector = require('../utils/connector');
 
-const queryThroughBaggageInfo = async () => {
+const queryThroughBaggageInfo = async (querys) => {
     try {
         return await connector.executeQuery(() => {
             const flightList = [
@@ -9,8 +9,6 @@ const queryThroughBaggageInfo = async () => {
                 'CA466', '3U3863', '3U3865', '3U6876', '3U6880', 'CA4508', 'CA4510', 'CA4514', 'CA4592',
                 'CA8541'
             ];
-            const placeholder = flightList.map((_, i) => `:${i + 1}`).join(',');
-
             const sql = `SELECT
                 f.FLIGHT_NO_FULL AS 航班号,
                 f."ATTRIBUTE" AS 属性,
@@ -20,7 +18,7 @@ const queryThroughBaggageInfo = async () => {
                 pi.旅客人数,
                 pi.行李件数
             FROM
-                PDPR.TFU_F_FLIGHT f
+                TFU_F_FLIGHT f
             LEFT JOIN (
                 SELECT
                     PI.FLIGHT_NO,
@@ -28,7 +26,7 @@ const queryThroughBaggageInfo = async () => {
                     COUNT(*) AS 旅客人数,
                     SUM(PI.PIECE) AS 行李件数
                 FROM
-                    PDPR.PASSENGER_INFO PI
+                    PASSENGER_INFO PI
                     LEFT JOIN BAG_LISTAGG_ALL BLA ON BLA.PASSENGER_ID = PI.PASSENGER_ID
                 WHERE
                     PI.TIMESTARTPLAN >= SYSDATE - INTERVAL '1' DAY
@@ -42,15 +40,11 @@ const queryThroughBaggageInfo = async () => {
             WHERE
                 f.FLIGHT_DATE >= TRUNC(SYSDATE)
                 AND f.inout = 'A'
-                AND f.FLIGHT_NO_FULL IN (${placeholder})
+                AND f.FLIGHT_NO_FULL IN (:flightList)
             ORDER BY
                 f."ATTRIBUTE",
-                f.TIME_START_PLAN`;
-            const binds = {};
-            flightList.forEach((flight, index) => {
-                binds[index + 1] = flight;
-            });
-
+                f.TIME_START_PLAN;`;
+            const binds
             return { sql, binds };
         });
     } catch (error) {
@@ -60,4 +54,4 @@ const queryThroughBaggageInfo = async () => {
     }
 };
 
-module.exports = { queryThroughBaggageInfo };
+module.exports = { queryPassenger, queryVerify };
