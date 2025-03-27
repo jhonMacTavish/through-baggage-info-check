@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-12 09:20:58
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-27 16:15:50
+ * @LastEditTime: 2025-03-27 16:12:37
  * @FilePath: \passengerInfoSearch\web\src\App.vue
 -->
 <script setup>
@@ -65,7 +65,6 @@ const queryVerify = async (row) => {
 }
 
 const reset = () => {
-  console.log('reset');
   passengerData.value = []
   verifyData.value = []
 }
