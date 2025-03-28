@@ -32,6 +32,7 @@ const queryThroughBaggageInfo = async () => {
                     LEFT JOIN BAG_LISTAGG_ALL BLA ON BLA.PASSENGER_ID = PI.PASSENGER_ID
                 WHERE
                     PI.TIMESTARTPLAN >= SYSDATE - INTERVAL '1' DAY
+                    AND PI.TIMESTARTPLAN <= SYSDATE
                     AND (BLA.ARRIVAL IS NULL OR BLA.ARRIVAL NOT LIKE '%TFU%')
                     AND PI.OUT_BNNUM IS NOT NULL
                     AND PI.OUT_FLIGHT_SEATNO IS NOT NULL
@@ -41,6 +42,7 @@ const queryThroughBaggageInfo = async () => {
             ) pi ON f.FLIGHT_NO_FULL = pi.FLIGHT_NO AND f.TIME_START_PLAN = pi.TIMESTARTPLAN
             WHERE
                 f.TIME_START_PLAN >= SYSDATE - INTERVAL '1' DAY
+                AND f.TIME_TERMINAL_PLAN <= SYSDATE
                 AND f.inout = 'A'
                 AND f.FLIGHT_NO_FULL IN (${placeholder})
             ORDER BY

@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-27 10:00:48
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-28 09:43:24
+ * @LastEditTime: 2025-03-28 08:18:41
  * @FilePath: \through-baggage-webe:\projects_vscode\company\through-baggage-info-check\web\src\App.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -11,13 +11,12 @@ import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import FileSaver from 'file-saver'
 import * as XLSX from 'xlsx'
-import { utils, writeFile } from 'xlsx-js-style';
 import axios from 'axios'
 import { dayjs } from 'element-plus'
 
 const tableData = ref([])
 const loading = ref(false)
-const date = dayjs().hour() < 9 ? dayjs().subtract(1, 'day').format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
+const date = dayjs().format('YYYY-MM-DD')
 
 const getData = async () => {
   try {
@@ -36,22 +35,16 @@ const getData = async () => {
 
       await axios.get("/api/statistics/flightInfo").then(res => {
         const checkData = res.data.obj;
+        console.log(checkData);
         if (checkData.length != 0) {
           tableData.value.forEach(item => {
             checkData.forEach(checkItem => {
               if (item.FLIGHT_NO_FULL == checkItem.inFlightNo && item.TIME_START_PLAN == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
                 item.PASSENGER_COUNT_WEB = checkItem.passengerTotal ? checkItem.passengerTotal : '/';
                 item.BAGGAGE_COUNT_WEB = checkItem.piece ? checkItem.piece : '/';
-                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : null;
+                item.PASSENGER_COUNT == checkItem.passengerTotal || item.BAGGAGE_COUNT == checkItem.piece ? item.warningStyle=true : null;
               }
             })
-          })
-          const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
-          tableData.value.forEach(item => {
-            item.PASSENGER_COUNT ? null : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT = '/' : null;
-            item.BAGGAGE_COUNT ? null : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT = '/' : null;
-            item.PASSENGER_COUNT_WEB ? null : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT_WEB = '/' : null;
-            item.BAGGAGE_COUNT_WEB ? null : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT_WEB = '/' : null;
           })
         }
       })
@@ -90,10 +83,10 @@ const exportExcel = async () => {
       worksheet[`D${rowIndex}`] = { v: item.TIME_START_PLAN, t: 's' };
       worksheet[`E${rowIndex}`] = { v: item.TIME_TERMINAL_PLAN, t: 's' };
       worksheet[`F${rowIndex}`] = { v: item.AIRPORT_START, t: 's' };
-      worksheet[`G${rowIndex}`] = { v: item.PASSENGER_COUNT || '', t: 'n' };
-      worksheet[`H${rowIndex}`] = { v: item.BAGGAGE_COUNT || '', t: 'n' };
-      worksheet[`I${rowIndex}`] = { v: item.PASSENGER_COUNT_WEB || '', t: 'n' };
-      worksheet[`J${rowIndex}`] = { v: item.BAGGAGE_COUNT_WEB || '', t: 'n' };
+      worksheet[`G${rowIndex}`] = { v: item.PASSENGER_COUNT || '/', t: 'n' };
+      worksheet[`H${rowIndex}`] = { v: item.BAGGAGE_COUNT || '/', t: 'n' };
+      worksheet[`I${rowIndex}`] = { v: item.PASSENGER_COUNT_WEB || '/', t: 'n' };
+      worksheet[`J${rowIndex}`] = { v: item.BAGGAGE_COUNT_WEB || '/', t: 'n' };
     });
 
     // 6. 重新设置合并单元格，保持模板结构

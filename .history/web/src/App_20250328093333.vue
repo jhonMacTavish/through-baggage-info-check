@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-27 10:00:48
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-28 09:43:24
+ * @LastEditTime: 2025-03-28 09:33:33
  * @FilePath: \through-baggage-webe:\projects_vscode\company\through-baggage-info-check\web\src\App.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -11,7 +11,6 @@ import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import FileSaver from 'file-saver'
 import * as XLSX from 'xlsx'
-import { utils, writeFile } from 'xlsx-js-style';
 import axios from 'axios'
 import { dayjs } from 'element-plus'
 
@@ -66,43 +65,36 @@ const getData = async () => {
 
 const exportExcel = async () => {
   try {
-    // 1. 加载 Excel 模板文件
-    const response = await fetch('/template.xlsx');  // 确保模板文件放在 `public` 目录下
+    // 1. 加载模板
+    const response = await fetch('/template.xlsx');
     const arrayBuffer = await response.arrayBuffer();
 
-    // 2. 读取 Excel 文件
+    // 2. 读取Excel，确保获取合并信息
     const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
-
-    // 3. 获取第一个 Sheet（假设数据在第一个 Sheet）
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
+    let merges = worksheet['!merges'] ? [...worksheet['!merges']] : []; // 复制原合并信息
 
-    // 4. 读取 Excel 模板的 **合并单元格信息**
-    const merges = worksheet['!merges'] || [];
-
-    // 5. 填充数据（假设数据从第 2 行开始填充）
+    // 3. 填充数据
     tableData.value.forEach((item, index) => {
-      const rowIndex = index + 7;  // 假设 Excel 第一行为标题，从 A2 开始填充
+      const rowIndex = index + 7; // 数据从第7行开始
 
-      worksheet[`A${rowIndex}`] = { v: '', t: 's' }; // 序号
+      // 仅填充合并区域的起始单元格（示例假设B、C列需要合并）
       worksheet[`B${rowIndex}`] = { v: item.FLIGHT_NO_FULL, t: 's' };
-      worksheet[`C${rowIndex}`] = { v: item.ATTRIBUTE, t: 's' };
-      worksheet[`D${rowIndex}`] = { v: item.TIME_START_PLAN, t: 's' };
-      worksheet[`E${rowIndex}`] = { v: item.TIME_TERMINAL_PLAN, t: 's' };
-      worksheet[`F${rowIndex}`] = { v: item.AIRPORT_START, t: 's' };
-      worksheet[`G${rowIndex}`] = { v: item.PASSENGER_COUNT || '', t: 'n' };
-      worksheet[`H${rowIndex}`] = { v: item.BAGGAGE_COUNT || '', t: 'n' };
-      worksheet[`I${rowIndex}`] = { v: item.PASSENGER_COUNT_WEB || '', t: 'n' };
-      worksheet[`J${rowIndex}`] = { v: item.BAGGAGE_COUNT_WEB || '', t: 'n' };
+      // 假设C${rowIndex}是合并的起始单元格，后续列不填充
+
+      // 添加新行的合并区域（例如B7:C7合并）
+      merges.push({
+        s: { r: rowIndex - 1, c: 1 }, // B列是第1列（0-based）
+        e: { r: rowIndex - 1, c: 2 }, // C列是第2列
+      });
     });
 
-    // 6. 重新设置合并单元格，保持模板结构
+    // 4. 重新设置合并信息
     worksheet['!merges'] = merges;
 
-    // 7. 生成新的 Excel 文件
+    // 5. 导出文件
     const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-    // 8. 保存文件
     FileSaver.saveAs(
       new Blob([wbout], { type: 'application/octet-stream' }),
       `${date}通程行李检查单.xlsx`
@@ -113,7 +105,58 @@ const exportExcel = async () => {
     console.error("导出失败:", error);
     ElMessage.error("导出失败，请检查模板文件！");
   }
-}
+};
+
+// const exportExcel = async () => {
+//   try {
+//     // 1. 加载 Excel 模板文件
+//     const response = await fetch('/template.xlsx');  // 确保模板文件放在 `public` 目录下
+//     const arrayBuffer = await response.arrayBuffer();
+
+//     // 2. 读取 Excel 文件
+//     const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
+
+//     // 3. 获取第一个 Sheet（假设数据在第一个 Sheet）
+//     const sheetName = workbook.SheetNames[0];
+//     const worksheet = workbook.Sheets[sheetName];
+
+//     // 4. 读取 Excel 模板的 **合并单元格信息**
+//     const merges = worksheet['!merges'] || [];
+
+//     // 5. 填充数据（假设数据从第 2 行开始填充）
+//     tableData.value.forEach((item, index) => {
+//       const rowIndex = index + 7;  // 假设 Excel 第一行为标题，从 A2 开始填充
+
+//       worksheet[`A${rowIndex}`] = { v: '', t: 's' }; // 序号
+//       worksheet[`B${rowIndex}`] = { v: item.FLIGHT_NO_FULL, t: 's' };
+//       worksheet[`C${rowIndex}`] = { v: item.ATTRIBUTE, t: 's' };
+//       worksheet[`D${rowIndex}`] = { v: item.TIME_START_PLAN, t: 's' };
+//       worksheet[`E${rowIndex}`] = { v: item.TIME_TERMINAL_PLAN, t: 's' };
+//       worksheet[`F${rowIndex}`] = { v: item.AIRPORT_START, t: 's' };
+//       worksheet[`G${rowIndex}`] = { v: item.PASSENGER_COUNT || '', t: 'n' };
+//       worksheet[`H${rowIndex}`] = { v: item.BAGGAGE_COUNT || '', t: 'n' };
+//       worksheet[`I${rowIndex}`] = { v: item.PASSENGER_COUNT_WEB || '', t: 'n' };
+//       worksheet[`J${rowIndex}`] = { v: item.BAGGAGE_COUNT_WEB || '', t: 'n' };
+//     });
+
+//     // 6. 重新设置合并单元格，保持模板结构
+//     worksheet['!merges'] = merges;
+
+//     // 7. 生成新的 Excel 文件
+//     const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+//     // 8. 保存文件
+//     FileSaver.saveAs(
+//       new Blob([wbout], { type: 'application/octet-stream' }),
+//       `${date}通程行李检查单.xlsx`
+//     );
+
+//     ElMessage.success("导出成功！");
+//   } catch (error) {
+//     console.error("导出失败:", error);
+//     ElMessage.error("导出失败，请检查模板文件！");
+//   }
+// }
 
 const tableRowClassName = ({ row }) => {
   if (row.warningStyle) {

@@ -41,6 +41,7 @@ const queryThroughBaggageInfo = async () => {
             ) pi ON f.FLIGHT_NO_FULL = pi.FLIGHT_NO AND f.TIME_START_PLAN = pi.TIMESTARTPLAN
             WHERE
                 f.TIME_START_PLAN >= SYSDATE - INTERVAL '1' DAY
+                AND f.TIME_TERMINAL_PLAN <= SYSDATE
                 AND f.inout = 'A'
                 AND f.FLIGHT_NO_FULL IN (${placeholder})
             ORDER BY
