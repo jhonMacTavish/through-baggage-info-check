@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-27 10:00:48
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-30 16:42:00
+ * @LastEditTime: 2025-03-28 10:05:58
  * @FilePath: \through-baggage-webe:\projects_vscode\company\through-baggage-info-check\web\src\App.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -11,7 +11,7 @@ import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import FileSaver from 'file-saver'
 import * as XLSX from 'xlsx'
-import * as XLSXStyle from 'xlsx-js-style';
+import { utils, writeFile } from 'xlsx-js-style';
 import axios from 'axios'
 import { dayjs } from 'element-plus'
 
@@ -25,7 +25,7 @@ const getData = async () => {
       params: {}
     });
     if (data.data.length == 0) {
-      ElMessage.warning(`没有通程行李信息`)
+      ElMessage.warning(`该旅客没有值机信息`)
       reset()
     } else {
       tableData.value = data.data.map(item => ({
@@ -42,16 +42,16 @@ const getData = async () => {
               if (item.FLIGHT_NO_FULL == checkItem.inFlightNo && item.TIME_START_PLAN == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
                 item.PASSENGER_COUNT_WEB = checkItem.passengerTotal ? checkItem.passengerTotal : '/';
                 item.BAGGAGE_COUNT_WEB = checkItem.piece ? checkItem.piece : '/';
-                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : '';
+                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : null;
               }
             })
           })
           const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
           tableData.value.forEach(item => {
-            item.PASSENGER_COUNT ? '' : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT = '/' : '';
-            item.BAGGAGE_COUNT ? '' : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT = '/' : '';
-            item.PASSENGER_COUNT_WEB ? '' : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT_WEB = '/' : '';
-            item.BAGGAGE_COUNT_WEB ? '' : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT_WEB = '/' : '';
+            item.PASSENGER_COUNT ? null : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT = '/' : null;
+            item.BAGGAGE_COUNT ? null : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT = '/' : null;
+            item.PASSENGER_COUNT_WEB ? null : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT_WEB = '/' : null;
+            item.BAGGAGE_COUNT_WEB ? null : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT_WEB = '/' : null;
           })
         }
       })
@@ -67,115 +67,74 @@ const getData = async () => {
 const exportExcel = async () => {
   try {
     // 1. 加载模板
-    const response = await fetch('/template.xlsx')
-    const arrayBuffer = await response.arrayBuffer()
+    const response = await fetch('/template.xlsx');
+    const arrayBuffer = await response.arrayBuffer();
 
-    // 2. 读取模板文件
-    const workbook = XLSXStyle.read(arrayBuffer, { type: 'array', cellStyles: true })
+    // 2. 读取 Excel 文件
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
 
-    // 3. 定义居中样式
+    // 3. 获取第一个 Sheet
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+
+    // 4. 定义居中样式
     const centerStyle = {
       alignment: {
         horizontal: "center",
         vertical: "center"
-      },
-      // 保留模板原有边框样式（根据实际模板调整）
-      // border: {
-      //   top: { style: 'thin' },
-      //   bottom: { style: 'thin' },
-      //   left: { style: 'thin' },
-      //   right: { style: 'thin' }
-      // }
-    }
+      }
+    };
 
-    // 4. 获取工作表
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+    // 5. 遍历所有单元格应用样式
+    Object.keys(worksheet).forEach(address => {
+      if (address.startsWith('!')) return; // 跳过特殊属性
+      
+      const cell = worksheet[address];
+      
+      // 保持原有样式合并新样式
+      cell.s = { 
+        ...cell.s,         // 保留原有样式（如果有）
+        ...centerStyle     // 添加居中样式
+      };
+    });
 
-    // 5. 创建带样式的单元格
-    const createCell = (value, isWarning = false) => {
-      const style = isWarning 
-        ? { ...centerStyle, fill: { fgColor: { rgb: "FFFF0000" } } }
-        : centerStyle
-        
-      return {
+    // 6. 填充数据（添加样式到新单元格）
+    tableData.value.forEach((item, index) => {
+      const rowIndex = index + 7;
+
+      // 创建带样式的单元格对象
+      const createCell = value => ({
         v: value,
         t: typeof value === 'number' ? 'n' : 's',
-        s: style
-      }
-    }
+        s: centerStyle // 直接应用居中样式
+      });
 
-    // 6. 填充数据
-    tableData.value.forEach((item, index) => {
-      const row = index + 6 // 从第7行开始填充数据
-      const isWarningRow = item.warningStyle
+      worksheet[`A${rowIndex}`] = createCell('');
+      worksheet[`B${rowIndex}`] = createCell(item.FLIGHT_NO_FULL);
+      worksheet[`C${rowIndex}`] = createCell(item.ATTRIBUTE);
+      worksheet[`D${rowIndex}`] = createCell(item.TIME_START_PLAN);
+      worksheet[`E${rowIndex}`] = createCell(item.TIME_TERMINAL_PLAN);
+      worksheet[`F${rowIndex}`] = createCell(item.AIRPORT_START);
+      worksheet[`G${rowIndex}`] = createCell(item.PASSENGER_COUNT);
+      worksheet[`H${rowIndex}`] = createCell(item.BAGGAGE_COUNT);
+      worksheet[`I${rowIndex}`] = createCell(item.PASSENGER_COUNT_WEB);
+      worksheet[`J${rowIndex}`] = createCell(item.BAGGAGE_COUNT_WEB);
+    });
 
-      // 创建单元格对象
-      const cells = {
-        // A: createCell(''), // 空列
-        B: createCell(item.FLIGHT_NO_FULL, isWarningRow),
-        C: createCell(item.ATTRIBUTE, isWarningRow),
-        D: createCell(item.TIME_START_PLAN, isWarningRow),
-        E: createCell(item.TIME_TERMINAL_PLAN, isWarningRow),
-        F: createCell(item.AIRPORT_START, isWarningRow),
-        G: createCell(item.PASSENGER_COUNT, isWarningRow),
-        H: createCell(item.BAGGAGE_COUNT, isWarningRow),
-        I: createCell(item.PASSENGER_COUNT_WEB, isWarningRow),
-        J: createCell(item.BAGGAGE_COUNT_WEB, isWarningRow)
-      }
+    // 7. 保持合并单元格
+    worksheet['!merges'] = worksheet['!merges'] || [];
 
-      // 将单元格加入工作表
-      Object.entries(cells).forEach(([col, cell]) => {
-        const cellAddress = XLSXStyle.utils.encode_cell({ c: col.charCodeAt(0) - 65, r: row })
-        worksheet[cellAddress] = cell
-      })
-    })
-
-    // 7. 处理合并单元格的样式
-    if (worksheet['!merges']) {
-      console.log(worksheet);
-      worksheet.C1.h = `${date}值班日通程数据提取检查`;
-      worksheet.C1.r = `${date}值班日通程数据提取检查`;
-      worksheet.C1.v = `${date}值班日通程数据提取检查`;
-      worksheet.C1.w = `${date}值班日通程数据提取检查`;
-    
-      worksheet['!merges'].forEach(merge => {
-        for (let r = merge.s.r; r <= merge.e.r; r++) {
-          for (let c = merge.s.c; c <= merge.e.c; c++) {
-            const cellAddress = XLSXStyle.utils.encode_cell({ r, c })
-            if (!worksheet[cellAddress]) continue
-            worksheet[cellAddress].s = { 
-              ...worksheet[cellAddress].s,
-              ...centerStyle 
-            }
-          }
-        }
-      })
-    }
-
-    // 8. 生成文件并保存
-    const wbout = XLSXStyle.write(workbook, {
-      bookType: 'xlsx',
-      type: 'binary',
-      bookSST: true
-    })
-
-    // 二进制转换函数
-    const s2ab = s => {
-      const buf = new ArrayBuffer(s.length)
-      const view = new Uint8Array(buf)
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff
-      return buf
-    }
-
+    // 8. 生成并保存文件
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     FileSaver.saveAs(
-      new Blob([s2ab(wbout)], { type: 'application/octet-stream' }),
+      new Blob([wbout], { type: 'application/octet-stream' }),
       `${date}通程行李检查单.xlsx`
-    )
+    );
 
-    ElMessage.success("导出成功！")
+    ElMessage.success("导出成功！");
   } catch (error) {
-    console.error("导出失败:", error)
-    ElMessage.error("导出失败，请检查模板文件！")
+    console.error("导出失败:", error);
+    ElMessage.error("导出失败，请检查模板文件！");
   }
 }
 

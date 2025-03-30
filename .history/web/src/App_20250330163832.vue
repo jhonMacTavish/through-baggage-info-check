@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-27 10:00:48
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-30 16:42:00
+ * @LastEditTime: 2025-03-30 16:38:32
  * @FilePath: \through-baggage-webe:\projects_vscode\company\through-baggage-info-check\web\src\App.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -42,7 +42,7 @@ const getData = async () => {
               if (item.FLIGHT_NO_FULL == checkItem.inFlightNo && item.TIME_START_PLAN == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
                 item.PASSENGER_COUNT_WEB = checkItem.passengerTotal ? checkItem.passengerTotal : '/';
                 item.BAGGAGE_COUNT_WEB = checkItem.piece ? checkItem.piece : '/';
-                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : '';
+                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : null;
               }
             })
           })
@@ -133,11 +133,6 @@ const exportExcel = async () => {
     // 7. 处理合并单元格的样式
     if (worksheet['!merges']) {
       console.log(worksheet);
-      worksheet.C1.h = `${date}值班日通程数据提取检查`;
-      worksheet.C1.r = `${date}值班日通程数据提取检查`;
-      worksheet.C1.v = `${date}值班日通程数据提取检查`;
-      worksheet.C1.w = `${date}值班日通程数据提取检查`;
-    
       worksheet['!merges'].forEach(merge => {
         for (let r = merge.s.r; r <= merge.e.r; r++) {
           for (let c = merge.s.c; c <= merge.e.c; c++) {

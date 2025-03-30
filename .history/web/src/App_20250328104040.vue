@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-27 10:00:48
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-03-30 16:42:00
+ * @LastEditTime: 2025-03-28 10:40:40
  * @FilePath: \through-baggage-webe:\projects_vscode\company\through-baggage-info-check\web\src\App.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -25,7 +25,7 @@ const getData = async () => {
       params: {}
     });
     if (data.data.length == 0) {
-      ElMessage.warning(`没有通程行李信息`)
+      ElMessage.warning(`该旅客没有值机信息`)
       reset()
     } else {
       tableData.value = data.data.map(item => ({
@@ -42,16 +42,16 @@ const getData = async () => {
               if (item.FLIGHT_NO_FULL == checkItem.inFlightNo && item.TIME_START_PLAN == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
                 item.PASSENGER_COUNT_WEB = checkItem.passengerTotal ? checkItem.passengerTotal : '/';
                 item.BAGGAGE_COUNT_WEB = checkItem.piece ? checkItem.piece : '/';
-                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : '';
+                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : null;
               }
             })
           })
           const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
           tableData.value.forEach(item => {
-            item.PASSENGER_COUNT ? '' : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT = '/' : '';
-            item.BAGGAGE_COUNT ? '' : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT = '/' : '';
-            item.PASSENGER_COUNT_WEB ? '' : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT_WEB = '/' : '';
-            item.BAGGAGE_COUNT_WEB ? '' : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT_WEB = '/' : '';
+            item.PASSENGER_COUNT ? null : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT = '/' : null;
+            item.BAGGAGE_COUNT ? null : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT = '/' : null;
+            item.PASSENGER_COUNT_WEB ? null : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT_WEB = '/' : null;
+            item.BAGGAGE_COUNT_WEB ? null : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT_WEB = '/' : null;
           })
         }
       })
@@ -80,12 +80,12 @@ const exportExcel = async () => {
         vertical: "center"
       },
       // 保留模板原有边框样式（根据实际模板调整）
-      // border: {
-      //   top: { style: 'thin' },
-      //   bottom: { style: 'thin' },
-      //   left: { style: 'thin' },
-      //   right: { style: 'thin' }
-      // }
+      border: {
+        top: { style: 'thin' },
+        bottom: { style: 'thin' },
+        left: { style: 'thin' },
+        right: { style: 'thin' }
+      }
     }
 
     // 4. 获取工作表
@@ -106,7 +106,7 @@ const exportExcel = async () => {
 
     // 6. 填充数据
     tableData.value.forEach((item, index) => {
-      const row = index + 6 // 从第7行开始填充数据
+      const row = index + 7 // 从第7行开始填充数据
       const isWarningRow = item.warningStyle
 
       // 创建单元格对象
@@ -133,11 +133,6 @@ const exportExcel = async () => {
     // 7. 处理合并单元格的样式
     if (worksheet['!merges']) {
       console.log(worksheet);
-      worksheet.C1.h = `${date}值班日通程数据提取检查`;
-      worksheet.C1.r = `${date}值班日通程数据提取检查`;
-      worksheet.C1.v = `${date}值班日通程数据提取检查`;
-      worksheet.C1.w = `${date}值班日通程数据提取检查`;
-    
       worksheet['!merges'].forEach(merge => {
         for (let r = merge.s.r; r <= merge.e.r; r++) {
           for (let c = merge.s.c; c <= merge.e.c; c++) {
