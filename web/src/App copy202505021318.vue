@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-27 10:00:48
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-07-08 08:39:05
+ * @LastEditTime: 2025-04-21 16:35:15
  * @FilePath: \through-baggage-webe:\projects_vscode\company\through-baggage-info-check\web\src\App.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -11,102 +11,55 @@ import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import FileSaver from 'file-saver'
 import * as XLSX from 'xlsx'
-import isBetween from 'dayjs/plugin/isBetween';
-import dayjs from 'dayjs'
 import * as XLSXStyle from 'xlsx-js-style';
 import axios from 'axios'
-// import { dayjs } from 'element-plus'
-dayjs.extend(isBetween);
+import { dayjs } from 'element-plus'
 
 const tableData = ref([])
 const loading = ref(false)
 console.log(dayjs().hour(), dayjs().subtract(1, 'day').format('YYYY-MM-DD'));
 const date = dayjs().hour() < 9 ? dayjs().subtract(1, 'day').format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
 
-function isWithinPast24Hours(time) {
-  const now = dayjs();
-  const target = dayjs(time);
-  const diffInMs = now.diff(target);
-
-  const currentHour = dayjs().hour()
-  const isMorningPeriod = currentHour < 9
-
-  return diffInMs > 0 && diffInMs < 24 * 60 * 60 * 1000;
-}
-
-function isTargetInRange(targetTime) {
-  const now = dayjs();
-  const today9am = now.startOf('day').add(9, 'hour');
-
-  let start, end;
-
-  if (now.isBefore(today9am)) {
-    // 当前时间在今日9点前，判断目标是否在 [昨天9点, 今天9点]
-    start = today9am.subtract(1, 'day');
-    end = today9am;
-  } else {
-    // 当前时间在今日9点后，判断目标是否在 [今天9点, 明天9点]
-    start = today9am;
-    end = today9am.add(1, 'day');
-  }
-
-  // 使用 isBetween 判断，并包含边界值
-  return dayjs(targetTime).isBetween(start, end, null, '[]');
-}
-
 const getData = async () => {
   try {
-    let { data } = await axios.get("/api/queryThroughBaggageInfo");
+    const { data } = await axios.get("/api/queryThroughBaggageInfo", {
+      params: {}
+    });
     if (data.data.length == 0) {
       ElMessage.warning(`没有通程行李信息`)
       reset()
     } else {
-      console.log(data);
-      tableData.value.length = 0
-      data.data.forEach(item => {
-        let obj = {
-          ...item,
-          TIME_START_PLAN: dayjs(item.TIME_START_PLAN).format('YYYY-MM-DD HH:mm:ss'),
-          TIME_TERMINAL_PLAN: dayjs(item.TIME_TERMINAL_PLAN).format('YYYY-MM-DD HH:mm:ss')
-        }
+      tableData.value = data.data.map(item => ({
+        ...item,
+        TIME_START_PLAN: dayjs(item.TIME_START_PLAN).format('YYYY-MM-DD HH:mm:ss'),
+        TIME_TERMINAL_PLAN: dayjs(item.TIME_TERMINAL_PLAN).format('YYYY-MM-DD HH:mm:ss')
+      }));
 
-        if (isTargetInRange(obj.TIME_START_PLAN)) {
-          tableData.value.push(obj)
-        } else {
-          return null
-        }
-      });
-
-      let res = await axios.get("/api/statistics/flightInfo")
-      const webData = res.data.obj;
-      console.log(webData);
-      if (webData.length != 0) {
-        tableData.value.forEach(item => {
-          webData.forEach(webItem => {
-            if (item.FLIGHT_NO_FULL == webItem.inFlightNo && item.TIME_START_PLAN == dayjs(webItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
-              item.PASSENGER_COUNT = item.PASSENGER_COUNT == webItem.passengerTotal ? item.PASSENGER_COUNT : webItem.passengerTotal;
-              item.BAGGAGE_COUNT = item.BAGGAGE_COUNT == webItem.piece ? item.BAGGAGE_COUNT : webItem.piece;
-              // item.PASSENGER_COUNT != webItem.passengerTotal || item.BAGGAGE_COUNT != webItem.piece ? item.warningStyle = true : '';
-            }
+      await axios.get("/api/statistics/flightInfo").then(res => {
+        const checkData = res.data.obj;
+        console.log(checkData);
+        if (checkData.length != 0) {
+          tableData.value.forEach(item => {
+            checkData.forEach(checkItem => {
+              console.log(item.TIME_START_PLAN, dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss') ,item.TIME_START_PLAN == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss'));
+              if (item.FLIGHT_NO_FULL == checkItem.inFlightNo && item.TIME_START_PLAN == dayjs(checkItem.timeStartPlan).format('YYYY-MM-DD HH:mm:ss')) {
+                item.PASSENGER_COUNT_WEB = checkItem.passengerTotal ? checkItem.passengerTotal : '0';
+                item.BAGGAGE_COUNT_WEB = checkItem.piece ? checkItem.piece : '0';
+                item.PASSENGER_COUNT != checkItem.passengerTotal || item.BAGGAGE_COUNT != checkItem.piece ? item.warningStyle = true : '';
+              }
+            })
           })
-        })
-      } else {
-        ElMessage.warning(`没有通程航班`)
-      }
-
-      res = await axios.get("/flight/baggage")
-      console.log(res);
-      const json = JSON.parse(res.data)
-      const SSdata = json.data;
-      console.log(SSdata);
-      tableData.value.forEach(item => {
-        SSdata.forEach(SSitem => {
-          if (item.FLIGHT_NO_FULL == SSitem.flightNo && item.TIME_START_PLAN == dayjs(SSitem.timestartPlan).format('YYYY-MM-DD HH:mm:ss')) {
-            item.PASSENGER_COUNT_SS = SSitem.tcLkCount;
-            item.BAGGAGE_COUNT_SS = SSitem.tcPackageCount;
-            item.PASSENGER_COUNT != SSitem.tcLkCount || item.BAGGAGE_COUNT != SSitem.tcPackageCount ? item.warningStyle = true : '';
-          }
-        })
+          const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
+          tableData.value.forEach(item => {
+            item.PASSENGER_COUNT ? '' : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT = '0' : '';
+            item.BAGGAGE_COUNT ? '' : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT = '0' : '';
+            item.PASSENGER_COUNT_WEB ? '' : item.TIME_START_PLAN <= currentTime ? item.PASSENGER_COUNT_WEB = '0' : '';
+            item.BAGGAGE_COUNT_WEB ? '' : item.TIME_START_PLAN <= currentTime ? item.BAGGAGE_COUNT_WEB = '0' : '';
+          });
+          tableData.value = tableData.value.filter(item => {
+            return dayjs(item.TIME_START_PLAN).isAfter(dayjs().subtract(1, 'day').startOf('date').format('YYYY-MM-DD HH:mm:ss'))
+          })
+        }
       })
     }
 
@@ -146,10 +99,10 @@ const exportExcel = async () => {
 
     // 5. 创建带样式的单元格
     const createCell = (value, isWarning = false) => {
-      const style = isWarning
+      const style = isWarning 
         ? { ...centerStyle, fill: { fgColor: { rgb: "FFFF0000" } } }
         : centerStyle
-
+        
       return {
         v: value,
         t: typeof value === 'number' ? 'n' : 's',
@@ -172,8 +125,8 @@ const exportExcel = async () => {
         F: createCell(item.AIRPORT_START, isWarningRow),
         G: createCell(item.PASSENGER_COUNT, isWarningRow),
         H: createCell(item.BAGGAGE_COUNT, isWarningRow),
-        I: createCell(item.PASSENGER_COUNT_SS, isWarningRow),
-        J: createCell(item.BAGGAGE_COUNT_SS, isWarningRow)
+        I: createCell(item.PASSENGER_COUNT_WEB, isWarningRow),
+        J: createCell(item.BAGGAGE_COUNT_WEB, isWarningRow)
       }
 
       // 将单元格加入工作表
@@ -190,15 +143,15 @@ const exportExcel = async () => {
       worksheet.C1.r = `${date}值班日通程数据提取检查`;
       worksheet.C1.v = `${date}值班日通程数据提取检查`;
       worksheet.C1.w = `${date}值班日通程数据提取检查`;
-
+    
       worksheet['!merges'].forEach(merge => {
         for (let r = merge.s.r; r <= merge.e.r; r++) {
           for (let c = merge.s.c; c <= merge.e.c; c++) {
             const cellAddress = XLSXStyle.utils.encode_cell({ r, c })
             if (!worksheet[cellAddress]) continue
-            worksheet[cellAddress].s = {
+            worksheet[cellAddress].s = { 
               ...worksheet[cellAddress].s,
-              ...centerStyle
+              ...centerStyle 
             }
           }
         }
@@ -270,8 +223,8 @@ onMounted(() => {
               <el-table-column prop="AIRPORT_START" label="始发地" />
               <el-table-column prop="PASSENGER_COUNT" label="旅客人数" />
               <el-table-column prop="BAGGAGE_COUNT" label="行李件数" />
-              <el-table-column prop="PASSENGER_COUNT_SS" label="旅客人数(盛视)" />
-              <el-table-column prop="BAGGAGE_COUNT_SS" label="行李件数(盛视)" />
+              <el-table-column prop="PASSENGER_COUNT_WEB" label="旅客人数(web)" />
+              <el-table-column prop="BAGGAGE_COUNT_WEB" label="行李件数(web)" />
             </el-table>
           </el-skeleton>
         </el-card>
