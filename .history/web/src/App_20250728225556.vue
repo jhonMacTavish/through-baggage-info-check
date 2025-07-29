@@ -97,7 +97,7 @@ const getData = async () => {
       res = await axios.get("/flight/baggage")
       console.log(res);
       // const json = JSON.parse(res.data)
-      const SSdata = res.data.data;
+      const SSdata = json.data.data;
       console.log(SSdata);
       tableData.value.forEach(item => {
         SSdata.forEach(SSitem => {

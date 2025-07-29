@@ -2,7 +2,7 @@
  * @Author: john_mactavish 981192661@qq.com
  * @Date: 2025-03-27 10:00:48
  * @LastEditors: john_mactavish 981192661@qq.com
- * @LastEditTime: 2025-07-28 22:55:56
+ * @LastEditTime: 2025-07-25 12:09:35
  * @FilePath: \through-baggage-webe:\projects_vscode\company\through-baggage-info-check\web\src\App.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -96,8 +96,9 @@ const getData = async () => {
 
       res = await axios.get("/flight/baggage")
       console.log(res);
-      // const json = JSON.parse(res.data)
-      const SSdata = res.data.data;
+      const json = JSON.parse(res.data)
+      log("通程行李信息", json);
+      const SSdata = json.data;
       console.log(SSdata);
       tableData.value.forEach(item => {
         SSdata.forEach(SSitem => {
@@ -107,8 +108,7 @@ const getData = async () => {
             item.PASSENGER_COUNT != SSitem.tcLkCount || item.BAGGAGE_COUNT != SSitem.tcPackageCount ? item.warningStyle = true : '';
           }
         })
-      });
-      console.log(tableData.value);
+      })
     }
 
 
